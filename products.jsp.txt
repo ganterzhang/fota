@@ -1,0 +1,442 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%
+    String path = request.getContextPath();
+    String basePath = request.getScheme() + "://"
+            + request.getServerName() + ":" + request.getServerPort() + path;
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>FLASHIT</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<!-- Loading Bootstrap -->
+	<link href="<%=basePath%>/dist/css/vendor/bootstrap.min.css" rel="stylesheet">
+
+	<!-- Loading Font Awesome -->
+	<link rel="stylesheet" href="<%=basePath%>/dist/font-awesome-4.3.0/css/font-awesome.min.css">
+
+	<!-- Loading MDL -->
+	<link rel="stylesheet" href="<%=basePath%>/dist/mdl/material.min.css">
+
+	<!-- Loading Flat UI -->
+	<link  rel="stylesheet" href="<%=basePath%>/dist/css/flat-ui-pro.css">
+
+	<!-- FOTA specific style -->
+	<link rel="stylesheet" href="<%=basePath%>/dist/css/FOTA.css">
+
+	<link rel="shortcut icon" href="<%=basePath%>/dist/img/favicon.ico">
+
+</head>
+<body>
+<jsp:include page="../head.jsp"></jsp:include>
+<div class="container">
+  <form action="<%=basePath%>/dic/listProduct.html" method="post" name="productForm" id="productForm">
+    <div class="search_div"> 厂商名称：
+      <input class="span3" type="text" name="name" value="${product.name }"/>
+      <a class="btn btn-sm btn-primary" href="javascript:search();" class="myBtn">查询</a> </div>
+    <br>
+    <table class="table table-bordered">
+        <tr>
+           
+            <th>序号</th>
+            <th>厂商ID</th>
+            <th>产品类型ID</th>
+            <th>产品型号ID</th>
+            <th>细分型号ID</th>
+            <th>产品名称(中文)</th>
+            <th>产品名称(缩写)</th>
+            <th>建立时间</th>
+            <th>操作</th>
+        </tr>
+        <c:choose>
+            <c:when test="${not empty productMap}">
+                <c:forEach items="${productMap}" var="product" varStatus="vs">
+                    <tr>
+                      
+                        <td>${vs.index+1}</td>
+                        <td>${product.key.factoryShortName }</td>
+                        <td>${product.key.productTypeShortName }</td>
+                        <td>${product.key.productModelShortName }</td>
+                        <td>${product.key.subProductModelShortName }</td>
+                        <td>
+                         <a href="<%=basePath%>/product/listVersion.html?productId=${product.key.shortName }">
+                        ${product.key.name }
+                        </a>
+                        </td>
+                        <td>
+                        <a href="<%=basePath%>/product/listVersion.html?productId=${product.key.shortName }">
+                        ${product.key.shortName }
+                        </a>
+                        </td>
+                        <td>
+                       <fmt:formatDate value="${product.key.createTime }" pattern="yyyy/MM/dd  HH:mm:ss" />
+                        </td>
+                        <td> 
+                       				 <c:if test="${product.value eq 'canDelete' }">
+<%-- 				                        	<input type="button" value="修改" class="btn btn-xs" onclick="editProduct(${product.key.id })" style="color:#fff;text-shadow: 0 -1px 0 rgba(0,0,0,0.25);background-color: #5bb75b;"> --%>
+<%-- 				                        	<input type="button" value="删除" class="btn btn-xs btn-default" onclick="delProduct(${product.key.id })"  style="color:#fff;text-shadow: 0 -1px 0 rgba(0,0,0,0.25);background-color: #5bb75b;"> --%>
+				                        	
+				                        	 <button class="btn btn-primary btn-sm" type="button" data-toggle="modal" data-target="#setTarget" onclick="editProduct(${product.key.id })">
+											修改
+											</button>
+				                        	 <button class="btn btn-primary btn-sm" type="button" data-toggle="modal" onclick="delProduct(${product.key.id })">
+											删除
+											</button>
+				                            </c:if>
+				                            <c:if test="${product.value ne 'canDelete' }">
+<%-- 				                            <input type="button" value="修改" class="btn btn-xs" onclick="editProduct(${product.key.id })" disabled="disabled"> --%>
+<%-- 				                        	<input type="button" value="删除" class="btn btn-xs btn-default" onclick="delProduct(${product.key.id })" disabled="disabled"> --%>
+				                        	
+				                        	 <button class="btn btn-primary btn-sm" type="button" data-toggle="modal" data-target="#setTarget" onclick="editProduct(${product.key.id })" disabled="disabled">
+											修改
+											</button>
+				                        	 <button class="btn btn-primary btn-sm" type="button" data-toggle="modal" onclick="delProduct(${product.key.id })" disabled="disabled">
+											删除
+											</button>
+				                            </c:if>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </c:when>
+            <c:otherwise>
+                <tr>
+                    <td colspan="8">没有相关数据</td>
+                </tr>
+            </c:otherwise>
+        </c:choose>
+    </table>
+    <button class="btn btn-primary btn-sm" type="button" data-toggle="modal" data-target="#setTarget" >
+	新增
+	</button>
+	 <div class="page_and_btn">
+   ${product.page.pageStr }
+   </div>
+  </form>
+</div>
+
+<!-- Modal setTarget -->
+	<div class="modal fade" id="setTarget" tabindex="-1" role="dialog">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				
+
+<form  name="productForm" id="productForm"  method="post">
+    <input type="hidden" name="id" id="id" />
+    <table border="0" cellpadding="2" cellspacing="5">
+        <tr>
+            <th valign="top">厂商ID:</th>
+            <td>
+            	 <c:forEach items="${factoryList}" var="factory" varStatus="vs">
+<%--             	 	<c:if test="${product.factoryShortName eq factory.shortName }"> --%>
+<%--             			<input type="radio" name="factoryShortName" id="factoryShortName" value="${factory.shortName }" title="${factory.name }" onclick="displaySelect()" checked> ${factory.shortName },${factory.name } --%>
+<%--             		</c:if> --%>
+<%--             	 	<c:if test="${product.factoryShortName ne factory.shortName }"> --%>
+            			<input type="radio" name="factoryShortName" id="factoryShortName" value="${factory.shortName }" title="${factory.name }" onclick="displaySelect()"> ${factory.shortName },${factory.name }
+<%--             		</c:if> --%>
+            	</c:forEach>
+            
+            
+            </td>
+        </tr>
+        <tr >
+            <th valign="top">产品类别:</th>
+            <td>
+            	 <c:forEach items="${productTypeList}" var="productType">
+<%--             	 	<c:choose> --%>
+<%-- 				         <c:when test="${product.productTypeShortName eq productType.shortName}"> --%>
+<%-- 				         	<input type="radio" name="productTypeShortName" id="productTypeShortName" value="${productType.shortName }" title="${productType.name }" onclick="displaySelect()" checked> ${productType.shortName },${productType.name } --%>
+<%-- 				         </c:when> --%>
+<%-- 				         <c:otherwise> --%>
+            				<input type="radio" name="productTypeShortName" id="productTypeShortName" value="${productType.shortName }" title="${productType.name }" onclick="displaySelect()"> ${productType.shortName },${productType.name }
+<%-- 				         </c:otherwise> --%>
+<%-- 					</c:choose> --%>
+            	</c:forEach>
+            </td>
+        </tr>
+        <tr>
+            <th valign="top">产品型号:</th>
+            <td>
+            	ID:<input type="text" name="productModelShortName" id="productModelShortName" maxlength="4" class="input_txt" onkeyup="displaySelect()" />
+            	名称:<input type="text" name="productModelName" id="productModelName" class="input_txt" maxlength="10" onkeyup="displaySelect()" />
+<%--             	ID:<input type="text" name="productModelShortName" id="productModelShortName" maxlength="4" class="input_txt" onkeyup="displaySelect()" value="${product.productModelShortName}"/> --%>
+<%--             	名称:<input type="text" name="productModelName" id="productModelName" class="input_txt" maxlength="10" onkeyup="displaySelect()" value="${product.name.split('-')[2]}"/> --%>
+                
+            </td>
+        </tr>
+        <tr>
+            <th valign="top">细分型号:</th>
+            <td>
+               
+                    <c:forEach items="${subProductList}" var="subProduct">
+<%--                     <c:choose> --%>
+<%-- 				         <c:when test="${product.subProductModelShortName eq subProduct.shortName}"> --%>
+<%-- 				         	 <input type="checkbox" name="subProductModelShortName" id="subProductModelShortName" value="${subProduct.shortName }" title="${subProduct.name }" onclick="displaySelect()" checked> ${subProduct.shortName },${subProduct.name } --%>
+<%-- 				         </c:when> --%>
+<%-- 				         <c:otherwise> --%>
+            				 <input type="checkbox" name="subProductModelShortName" id="subProductModelShortName" value="${subProduct.shortName }" title="${subProduct.name }" onclick="displaySelect()"> ${subProduct.shortName },${subProduct.name }
+<%-- 				         </c:otherwise> --%>
+<%-- 					</c:choose> --%>
+                       
+                    </c:forEach>
+            </td>
+        </tr>
+
+      
+
+    </table>
+    <div id="displaycontent" style="color:#666666;font-family: Microsoft Yahei, Arial, sans-serif;font-size: 20px;">
+
+</div>
+    <div class="modal-footer">
+					<button type="button" class="btn btn-primary" onclick="return checkInfo();">保存</button>
+					<button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+	</div>
+</form>
+
+
+
+
+
+
+			</div><!-- /.model-content -->
+		</div><!-- /.model-dialog -->
+	</div><!-- /.model -->
+
+
+<jsp:include page="../foot.jsp"></jsp:include>
+</body>
+</html>
+<script src="<%=basePath%>/dist/js/vendor/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="<%=basePath%>/dist/js/flat-ui-pro.min.js"></script>
+<!-- mdl js -->
+<script src="<%=basePath%>/dist/mdl/material.min.js"></script>
+<script src="docs/assets/js/application.js"></script>
+<script type="text/javascript">
+  
+
+    function checkInfo() {
+//     	alert($("#subProductModelShortName").val());
+//     	alert($(":checkbox[name=subProductModelShortName]:checked").val()); 
+    	
+//     	$(":checkbox[name=subProductModelShortName][value="+result.subProductModelShortName+"]")
+    	 if ($("#productModelShortName").val() == "") {
+              alert("请选择输入产品型号ID!");
+              $("#productModelShortName").focus();
+              return false;
+         }
+      
+        
+        if ($("#productModelShortName").val().length >4) {
+            alert("产品型号ID不能大于4个字符!");
+            $("#productModelShortName").focus();
+            return false;
+        }
+        if ($("#productModelShortName").val().match(/[^A-Za-z0-9]/g)) {
+            alert("只能输入数字和字母!");
+            $("#productModelShortName").focus();
+            return false;
+        }
+        
+		//var productModelName =document.getElementById("productModelName");
+		 if ($("#productModelName").val() == "") {
+	            alert("请选择输入产品型号名!");
+	            $("#productModelName").focus();
+	            return false;
+	        }
+		 
+	      if ($("#productModelName").val().length >50) {
+	            alert("产品型号名称不能大于50个字符!");
+	            $("#productModelName").focus();
+	            return false;
+	      }
+	     
+	     
+	    	
+        var factoryShortName=document.getElementsByName("factoryShortName");
+       
+		var factoryShortNameValue="";
+		for (i=0;i<factoryShortName.length;i++)
+		{
+		  if(factoryShortName[i].checked == true)
+		  {
+			  factoryShortNameValue+=factoryShortName[i].value;
+		  }
+		}
+		
+		if(factoryShortNameValue==""){
+			alert("请选择厂商!");
+            $("#factoryShortName").focus();
+            return false;
+		}
+	        
+        var productTypeShortName=document.getElementsByName("productTypeShortName");
+		var productTypeShortNameValue="";
+		
+		for (i=0;i<productTypeShortName.length;i++)
+		{
+		  if(productTypeShortName[i].checked == true)
+		  {
+			  productTypeShortNameValue+=productTypeShortName[i].value;
+		  }
+		}
+		if(productTypeShortNameValue==""){
+			alert("请选择产品类别!");
+            $("#productTypeShortName").focus();
+            return false;
+		}
+		 
+	
+        var subProductModelShortName=document.getElementsByName("subProductModelShortName");
+		var subProductModelShortNameValue="";
+		for (i=0;i<subProductModelShortName.length;i++)
+		{
+		  if(subProductModelShortName[i].checked == true)
+		  {
+			subProductModelShortNameValue+=subProductModelShortName[i].value+",";
+			//var span=document.createElement("span");
+		   // span.innerHTML=factoryShortNameValue+"-"+productTypeShortNameValue+"-"+productModelShortName.value+"-"+subProductModelShortNameValue+"&nbsp;&nbsp;&nbsp;&nbsp;"+factoryShortNameTitle+"-"+productTypeShortNameTitle+"-"+productModelName.value+"-"+subProductModelShortNameTitle+"<br>";
+			//document.getElementById('displaycontent').appendChild(span);
+		  }
+		}
+		
+		if(subProductModelShortNameValue==""){
+			alert("请选择细分型号!");
+            $("#subProductModelShortName").focus();
+            return false;
+		}
+		
+		
+		 jQuery.ajax({
+	 	       type: "POST",
+	 	       url: "<%=basePath%>/product/saveProduct1.html",
+	  	       form:'productForm',
+// 	  	       data: $("#productForm").serialize(),
+			   data:{factoryShortName:factoryShortNameValue,productTypeShortName:productTypeShortNameValue,productModelShortName:productModelShortNameValue,productModelName:productModelNameValue,subProductModelShortName:[subProductModelShortNameValue]},
+	 	       dataType: "json",
+	 	       success: function(result) {
+	 	    	   alert(result);
+		 	       if(result.success){
+		 	       	window.location.reload();
+		 	        } 
+		 	       else 
+		 	       {
+		 	            alert(result.msg);
+		 	        	}
+	 	        },
+	 	        error:function(e){
+	 	            alert('后台服务异常：' + e.toString());
+	 	          }
+	 	        });
+
+    }
+
+//     function success() {
+//         if (dg.curWin.document.forms[0]) {
+//             dg.curWin.document.forms[0].action = dg.curWin.location + "";
+//             dg.curWin.document.forms[0].submit();
+//         } else {
+//             dg.curWin.location.reload();
+//         }
+//         dg.cancel();
+//     }
+
+//     function failed() {
+//         alert("新增失败，该产品已存在！");
+//         $("#loginname").select();
+//         $("#loginname").focus();
+//     }
+    
+    function displaySelect() {
+		document.getElementById('displaycontent').innerHTML="";
+        
+		var productModelShortName =document.getElementById("productModelShortName");
+		var productModelName =document.getElementById("productModelName");
+    
+        var factoryShortName=document.getElementsByName("factoryShortName");
+       
+		var factoryShortNameValue="";
+		var factoryShortNameTitle="";
+		
+		
+		
+		for (i=0;i<factoryShortName.length;i++)
+		{
+		  if(factoryShortName[i].checked == true)
+		  {
+			  factoryShortNameValue+=factoryShortName[i].value;
+			  factoryShortNameTitle+=factoryShortName[i].title;
+		  }
+		}
+	        
+        var productTypeShortName=document.getElementsByName("productTypeShortName");
+		var productTypeShortNameValue="";
+		var productTypeShortNameTitle="";
+		
+		for (i=0;i<productTypeShortName.length;i++)
+		{
+		  if(productTypeShortName[i].checked == true)
+		  {
+			  productTypeShortNameValue+=productTypeShortName[i].value;
+			  productTypeShortNameTitle+=productTypeShortName[i].title;
+		  }
+		}
+        var subProductModelShortName=document.getElementsByName("subProductModelShortName");
+		var subProductModelShortNameValue="";
+		var subProductModelShortNameTitle="";
+		for (i=0;i<subProductModelShortName.length;i++)
+		{
+		  if(subProductModelShortName[i].checked == true)
+		  {
+			  subProductModelShortNameValue=subProductModelShortName[i].value;
+			  subProductModelShortNameTitle=subProductModelShortName[i].title;
+				var span=document.createElement("span");
+		        span.innerHTML=factoryShortNameValue+"-"+productTypeShortNameValue+"-"+productModelShortName.value+"-"+subProductModelShortNameValue+"&nbsp;&nbsp;&nbsp;&nbsp;"+factoryShortNameTitle+"-"+productTypeShortNameTitle+"-"+productModelName.value+"-"+subProductModelShortNameTitle+"<br>";
+				document.getElementById('displaycontent').appendChild(span);
+		  }
+		}
+        
+    }
+    
+    function editProduct(productId) {
+        jQuery.ajax({
+            type: "GET",
+            url: "<%=basePath%>/product/editProduct.html?id="+productId,
+            dataType: "json",
+            success: function(result) {
+//             	alert(result.factoryShortName);
+//      	    	   $("#name").attr("value",result.name);
+//      	    	   $("#shortName").attr("value",result.shortName);
+//      	    	   $("#id").attr("value",result.id);
+      	    	   $("#productModelShortName").attr("value",result.productModelShortName);
+      	    	   $("#productModelName").attr("value",result.name.split('-')[2]);
+      	    	   $("#id").attr("value",result.id);
+//      	    	  $("#factoryShortName").val(result.factoryShortName);
+//    	    	  $("#productModelName").val(result.productModelName);
+//       	    		$("input[name='productModelShortName']".attr("value",result.factoryShortName);
+      	    		$(":radio[name=factoryShortName][value="+result.factoryShortName+"]").attr("checked","true");
+      	    		$(":radio[name=productTypeShortName][value="+result.productTypeShortName+"]").attr("checked","true");
+      	    		$(":checkbox[name=subProductModelShortName][value="+result.subProductModelShortName+"]").attr("checked","true");
+//       	    		$(":radio[name=factoryShortName][value="+result.factoryShortName+"]").attr("checked","true");
+                 },
+                 error:function(e){
+                     alert('后台服务异常：' + e.toString());
+                 }
+             });
+    }
+    
+    function delProduct(productId) {
+        if (confirm("确定要删除该记录？")) {
+            var url = "<%=basePath%>/product/deleteProduct.html?id=" + productId;
+            $.get(url, function (data) {
+                if (data == "success") {
+                    document.location.reload();
+                }
+            });
+        }
+    }
+</script>

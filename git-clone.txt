@@ -1,0 +1,1 @@
+git fetch ssh://ganter.zhang@192.168.69.61:29418/tronxyz/service/fota refs/changes/02/402/1 && git cherry-pick FETCH_HEAD
